@@ -1,6 +1,6 @@
 ---
 title: "Prediction Assignment"
-output: html_document
+output: word_document
 ---
 **Load Packages**
 ```{r}
