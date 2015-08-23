@@ -6,15 +6,19 @@ output: html_document
 ```{r}
 library(caret)
 library(rattle)
-library(rpart.plot)
-library(ggplot2)
+library(RCurl)
 ```
 
 **Get Data, prepare for model building**
 We are looking at a table with 151 potential predictor variables. 
 ```{r}
-training <- read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", na.strings=c("NA","#DIV/0!",""))
-testing <- read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", na.strings=c("NA","#DIV/0!",""))
+data <- getURL("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv",
+               ssl.verifypeer=0L, followlocation=1L)
+training <- read.csv(text=data, na.strings=c("NA","#DIV/0!",""))
+
+data <- getURL("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv",
+               ssl.verifypeer=0L, followlocation=1L)
+testing <- read.csv(text=data, na.strings=c("NA","#DIV/0!",""))
 #Drop columns that don't add value for our predicion
 training2 <- training[, -seq(from = 1, to = 8, by = 1)]
 set.seed(244)
