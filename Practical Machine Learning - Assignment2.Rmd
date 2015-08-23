@@ -1,0 +1,76 @@
+---
+title: "Prediction Assignment"
+output: html_document
+---
+**Load Packages**
+```{r}
+library(caret)
+library(rattle)
+library(rpart.plot)
+library(ggplot2)
+```
+
+**Get Data, prepare for model building**
+We are looking at a table with 151 potential predictor variables. 
+```{r}
+training <- read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", na.strings=c("NA","#DIV/0!",""))
+testing <- read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", na.strings=c("NA","#DIV/0!",""))
+#Drop columns that don't add value for our predicion
+training2 <- training[, -seq(from = 1, to = 8, by = 1)]
+set.seed(244)
+
+# Create additional Test Subset withing 40% of Total Training Data
+# Training Subset with 60% of Total Training Data
+inTest <- createDataPartition(y = training2$classe, p = 0.4, list = F)
+test <- training2[inTest, ]
+train <- training2[-inTest, ]
+```
+
+This dataset has a lot of variables that are sparse. To make our predictiors  more relevant it might be a good idea to get rid of variables that are sparse. Lets drop all that are NA for more than 15% of the observations.
+
+```{r}
+removeNAcols   <- function(x) { 
+        x[ , colSums( is.na(x) ) < nrow(x) ] 
+}
+train <- removeNAcols(train)
+test  <- removeNAcols(test)
+
+removeanyNA       <- function(x) {
+        x[,sapply(x, function(y) !any(is.na(y)))] 
+}
+
+train <- removeanyNA(train)
+test  <- removeanyNA(test)
+
+```
+
+**Prediction Model** 
+I will go ahead and use random forest to predict 'classe'. This prediction method is especially well suited for large number of variables or predictors.
+
+```{r}
+
+random.forest <- train(train,
+                       train$classe,
+                       tuneGrid=data.frame(mtry=3),
+                       trControl=trainControl(method="none")
+                       )
+```
+
+**Results**
+Here are the results of the prediction model building
+```{r, echo=FALSE }
+summary(random.forest)
+plot(varImp(random.forest))
+```
+
+**Cross Validation**
+
+We can test our prediction against the 40% test data still untouched. THe accuracy and Kappa value of almost one show that our random forest  works well to predict accelerometer measurements.
+```{r}
+confusionMatrix(predict(random.forest,
+                        newdata=test),
+                test$classe
+                )
+```
+
+
